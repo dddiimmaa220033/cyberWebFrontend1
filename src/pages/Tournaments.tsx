@@ -1,5 +1,6 @@
-
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CreateTournamentModal from "@/components/tournaments/CreateTournamentModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,6 +75,13 @@ const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [gameFilter, setGameFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const navigate = useNavigate();
+
+  const handleTournamentCreated = (tournamentId: string) => {
+    setShowCreateModal(false);
+    navigate(`/tournaments/${tournamentId}/admin`);
+  };
 
   const games = Array.from(new Set(tournamentData.map(t => t.game)));
   const statuses = Array.from(new Set(tournamentData.map(t => t.status)));
@@ -99,7 +107,10 @@ const Tournaments = () => {
                 Browse through all available tournaments. Filter by game or status to find the perfect competition for your team.
               </p>
             </div>
-            <Button className="mt-4 md:mt-0 bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity">
+            <Button
+              className="mt-4 md:mt-0 bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity"
+              onClick={() => setShowCreateModal(true)}
+            >
               Create Tournament
             </Button>
           </div>
@@ -206,6 +217,12 @@ const Tournaments = () => {
           )}
         </div>
       </div>
+      {showCreateModal && (
+        <CreateTournamentModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={handleTournamentCreated}
+        />
+      )}
     </div>
   );
 };

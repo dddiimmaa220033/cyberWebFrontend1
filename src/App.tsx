@@ -14,6 +14,7 @@ import AdminPanel from "./pages/AdminPanel";
 import SteamCallback from "@/pages/SteamCallback";
 import Profile from "@/pages/Profile";
 import TeamProfile from "@/pages/TeamProfile";
+import TournamentAdminPanel from "@/pages/tournament/TournamentAdminPanel";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/steam-callback" element={<SteamCallback />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/teams/:teamId" element={<TeamProfile />} />
+              <Route path="/tournaments/:id/admin" element={<TournamentAdminPanel />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
