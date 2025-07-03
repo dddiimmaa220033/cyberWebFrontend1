@@ -2,10 +2,23 @@ import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Search, Users, Filter } from "lucide-react";
 import TeamCard from "@/components/teams/TeamCard";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogClose,
+} from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 const teamsData = [
 	{
@@ -97,61 +110,12 @@ const teamsData = [
 	},
 ];
 
-// Додайте просту форму для створення команди
-const CreateTeamForm = ({ onClose }: { onClose: () => void }) => {
-	const [teamName, setTeamName] = useState("");
-	const [game, setGame] = useState("");
-	const [invite, setInvite] = useState("");
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		// Тут можна додати логіку відправки даних на сервер
-		alert(`Team: ${teamName}, Game: ${game}, Invite: ${invite}`);
-		onClose();
-	};
-
-	return (
-		<form onSubmit={handleSubmit} className="space-y-4">
-			<div>
-				<label className="block mb-1 font-medium">Team Name</label>
-				<Input
-					value={teamName}
-					onChange={(e) => setTeamName(e.target.value)}
-					required
-				/>
-			</div>
-			<div>
-				<label className="block mb-1 font-medium">Game</label>
-				<Input value={game} onChange={(e) => setGame(e.target.value)} required />
-			</div>
-			<div>
-				<label className="block mb-1 font-medium">
-					Invite User (email or username)
-				</label>
-				<Input
-					value={invite}
-					onChange={(e) => setInvite(e.target.value)}
-					required
-				/>
-			</div>
-			<div className="flex justify-end gap-2">
-				<Button
-					type="button"
-					variant="secondary"
-					onClick={onClose}
-				>
-					Cancel
-				</Button>
-				<Button type="submit">Create</Button>
-			</div>
-		</form>
-	);
-};
-
 const Teams = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [gameFilter, setGameFilter] = useState("all");
 	const [showCreateForm, setShowCreateForm] = useState(false);
+	const [teamName, setTeamName] = useState("");
+	const navigate = useNavigate();
 
 	const games = Array.from(new Set(teamsData.map((t) => t.game)));
 
@@ -162,6 +126,15 @@ const Teams = () => {
 		const matchesGame = gameFilter === "all" || team.game === gameFilter;
 		return matchesSearch && matchesGame;
 	});
+
+	const handleCreate = (e: React.FormEvent) => {
+		e.preventDefault();
+		// Тут має бути запит до бекенду для створення команди, який повертає teamId
+		const newTeamId = Math.random().toString(36).substring(2, 9); // тимчасово
+		setShowCreateForm(false);
+		setTeamName("");
+		navigate(`/teams/${newTeamId}`);
+	};
 
 	return (
 		<div className="page-transition-wrapper min-h-screen">
@@ -282,22 +255,38 @@ const Teams = () => {
 			</div>
 
 			{/* Діалогове вікно для створення команди */}
-			<Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Create a New Team</DialogTitle>
-						<DialogClose asChild>
+			{showCreateForm && (
+				<div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+					<form
+						onSubmit={handleCreate}
+						className="bg-[#23263a] p-8 rounded-lg flex flex-col gap-4 min-w-[320px]"
+					>
+						<label className="text-white font-semibold">Team name</label>
+						<input
+							className="p-2 rounded bg-[#181c2f] text-white"
+							value={teamName}
+							onChange={(e) => setTeamName(e.target.value)}
+							required
+							placeholder="Enter team name"
+						/>
+						<div className="flex gap-2 justify-end">
 							<button
-								className="absolute right-4 top-4"
+								type="button"
 								onClick={() => setShowCreateForm(false)}
+								className="px-4 py-2 rounded bg-gray-500 text-white"
 							>
-								×
+								Cancel
 							</button>
-						</DialogClose>
-					</DialogHeader>
-					<CreateTeamForm onClose={() => setShowCreateForm(false)} />
-				</DialogContent>
-			</Dialog>
+							<button
+								type="submit"
+								className="px-4 py-2 rounded bg-[#13b7e6] text-white font-bold"
+							>
+								Create
+							</button>
+						</div>
+					</form>
+				</div>
+			)}
 		</div>
 	);
 };

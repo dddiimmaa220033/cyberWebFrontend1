@@ -12,6 +12,8 @@ import NotFound from "./pages/NotFound";
 import LoginForm from "./pages/login";
 import AdminPanel from "./pages/AdminPanel";
 import SteamCallback from "@/pages/SteamCallback";
+import Profile from "@/pages/Profile";
+import TeamProfile from "@/pages/TeamProfile";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,8 @@ const App = () => (
                 }
               />
               <Route path="/steam-callback" element={<SteamCallback />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/teams/:teamId" element={<TeamProfile />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
