@@ -1,8 +1,16 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom"; // Додайте цей імпорт
 
 const Profile = () => {
   const [tab, setTab] = useState<"teams" | "tournaments" | "friends">("teams");
   const username = "ddiimmaa220033"; // замініть на динамічне значення
+
+  // Моки команд
+  const teams = [
+    { id: "tyjiyjij", name: "tyjiyjij", members: 1 },
+    { id: "123434", name: "123434", members: 1 },
+    { id: "12341243", name: "12341243", members: 1 },
+  ];
 
   return (
     <div className="min-h-screen bg-[#181c2f] py-20 pt-40">
@@ -62,27 +70,19 @@ const Profile = () => {
           {tab === "teams" && (
             // Teams tab content (скріншот 3)
             <div className="flex gap-8">
-              <div className="flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full bg-[#23263a] flex items-center justify-center mb-2">
-                  <span className="text-5xl text-[#6c7a96]">👥</span>
-                </div>
-                <div className="text-white font-semibold">tyjiyjij</div>
-                <div className="text-muted-foreground text-sm">1 member</div>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full bg-[#23263a] flex items-center justify-center mb-2">
-                  <span className="text-5xl text-[#6c7a96]">👥</span>
-                </div>
-                <div className="text-white font-semibold">123434</div>
-                <div className="text-muted-foreground text-sm">1 member</div>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full bg-[#23263a] flex items-center justify-center mb-2">
-                  <span className="text-5xl text-[#6c7a96]">👥</span>
-                </div>
-                <div className="text-white font-semibold">12341243</div>
-                <div className="text-muted-foreground text-sm">1 member</div>
-              </div>
+              {teams.map((team) => (
+                <Link
+                  to={`/teams/${team.id}`}
+                  key={team.id}
+                  className="flex flex-col items-center group cursor-pointer"
+                >
+                  <div className="w-32 h-32 rounded-full bg-[#23263a] flex items-center justify-center mb-2 group-hover:bg-[#13b7e6] transition">
+                    <span className="text-5xl text-[#6c7a96] group-hover:text-white transition">👥</span>
+                  </div>
+                  <div className="text-white font-semibold group-hover:text-[#13b7e6] transition">{team.name}</div>
+                  <div className="text-muted-foreground text-sm">{team.members} member</div>
+                </Link>
+              ))}
             </div>
           )}
 
