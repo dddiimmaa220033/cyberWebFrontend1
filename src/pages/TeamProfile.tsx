@@ -1,22 +1,26 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 const TeamProfile = () => {
   const { teamId } = useParams();
-  // Замініть на реальні дані з бекенду
-  const team = {
-    name: teamId,
-    members: [
-      {
-        id: 1,
-        name: "ddiimmaa220033",
-        role: "Captain",
-        registered: "Registered 15 days ago"
-      }
-    ]
-  };
+  const [team, setTeam] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // або "accessToken", якщо саме він валідний
+    fetch(`http://localhost:3000/teams/${teamId}/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => res.json())
+      .then(data => setTeam(data));
+  }, [teamId]);
 
   const [tab, setTab] = useState<"overview" | "members" | "statistics">("members");
+
+  if (!team) {
+    return <div className="text-white text-center py-10">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#10131c]">
@@ -28,7 +32,7 @@ const TeamProfile = () => {
           </div>
           <div>
             <div className="uppercase text-[#bfc9e0] text-xs font-semibold mb-1">TEAM</div>
-            <div className="text-4xl font-extrabold text-white mb-1 tracking-wide">{team.name}</div>
+            <div className="text-4xl font-extrabold text-white mb-1 tracking-wide">{team.teamName}</div>
             <div className="text-[#bfc9e0] text-sm">{team.members.length} member</div>
           </div>
           <button className="ml-auto bg-[#13b7e6] hover:bg-[#0fa1c7] text-white px-6 py-2 rounded font-bold transition">

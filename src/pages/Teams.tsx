@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import CreateTeamDialog from "./CreateTeamDialog";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,14 +13,6 @@ import {
 } from "@/components/ui/select";
 import { Search, Users, Filter } from "lucide-react";
 import TeamCard from "@/components/teams/TeamCard";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogClose,
-} from "@/components/ui/dialog";
-import { useNavigate } from "react-router-dom";
 
 const teamsData = [
 	{
@@ -134,6 +128,12 @@ const Teams = () => {
 		setShowCreateForm(false);
 		setTeamName("");
 		navigate(`/teams/${newTeamId}`);
+	};
+
+	const handleTeamCreated = (team: any) => {
+		setShowCreateForm(false);
+		// id може бути team.id або team.teamId, залежно від відповіді бекенду
+		navigate(`/teams/${team.id || team.teamId}`);
 	};
 
 	return (
@@ -257,34 +257,10 @@ const Teams = () => {
 			{/* Діалогове вікно для створення команди */}
 			{showCreateForm && (
 				<div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-					<form
-						onSubmit={handleCreate}
-						className="bg-[#23263a] p-8 rounded-lg flex flex-col gap-4 min-w-[320px]"
-					>
-						<label className="text-white font-semibold">Team name</label>
-						<input
-							className="p-2 rounded bg-[#181c2f] text-white"
-							value={teamName}
-							onChange={(e) => setTeamName(e.target.value)}
-							required
-							placeholder="Enter team name"
-						/>
-						<div className="flex gap-2 justify-end">
-							<button
-								type="button"
-								onClick={() => setShowCreateForm(false)}
-								className="px-4 py-2 rounded bg-gray-500 text-white"
-							>
-								Cancel
-							</button>
-							<button
-								type="submit"
-								className="px-4 py-2 rounded bg-[#13b7e6] text-white font-bold"
-							>
-								Create
-							</button>
-						</div>
-					</form>
+					<CreateTeamDialog
+						onClose={() => setShowCreateForm(false)}
+						onCreated={handleTeamCreated}
+					/>
 				</div>
 			)}
 		</div>
