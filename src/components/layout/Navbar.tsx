@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Home, Settings, Menu } from "lucide-react";
+import { Trophy, Users, Home, Settings, Menu, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_BG = "bg-[#101226]";
@@ -11,6 +11,8 @@ const Navbar = () => {
   const [showNavbar, setShowNavbar] = useState(true);
   const [headerBg, setHeaderBg] = useState(DEFAULT_BG);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [invites, setInvites] = useState<any[]>([]);
+  const [showInvites, setShowInvites] = useState(false);
   const lastScrollY = useRef(window.scrollY);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -28,6 +30,34 @@ const Navbar = () => {
       setIsAuthenticated(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:3000/teams/invites", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setInvites(data));
+  }, [isAuthenticated]);
+
+  const acceptInvite = async (inviteId: number) => {
+    const token = localStorage.getItem("token");
+    await fetch(`http://localhost:3000/teams/invites/${inviteId}/accept`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setInvites(invites.filter(i => i.id !== inviteId));
+  };
+
+  const declineInvite = async (inviteId: number) => {
+    const token = localStorage.getItem("token");
+    await fetch(`http://localhost:3000/teams/invites/${inviteId}/decline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setInvites(invites.filter(i => i.id !== inviteId));
+  };
 
   // Intersection Observer для секцій
   useEffect(() => {
@@ -143,12 +173,42 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-6 ml-auto mr-8">
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
-              <Link
-                to="/profile"
-                className="font-bold text-lg hover:underline transition-colors"
-              >
+              <Link to="/profile" className="font-bold text-lg hover:underline transition-colors">
                 {username}
               </Link>
+              {/* Notification bell */}
+              <div className="relative">
+                <button onClick={() => setShowInvites(v => !v)}>
+                  <Bell className="w-6 h-6 text-white" />
+                  {invites.length > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-xs rounded-full px-1 text-white">{invites.length}</span>
+                  )}
+                </button>
+                {showInvites && (
+                  <div className="absolute right-0 mt-2 w-80 bg-[#23263a] rounded shadow-lg z-50 p-4">
+                    <div className="font-bold text-white mb-2">Запрошення в команди</div>
+                    {invites.length === 0 && <div className="text-[#bfc9e0]">Немає нових запрошень</div>}
+                    {invites.map(invite => (
+                      <div key={invite.id} className="flex justify-between items-center mb-2">
+                        <div>
+                          <div className="text-white">{invite.team_name}</div>
+                          <div className="text-xs text-[#bfc9e0]">від {invite.from_username}</div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                            onClick={() => acceptInvite(invite.id)}
+                          >Прийняти</button>
+                          <button
+                            className="bg-red-600 text-white px-2 py-1 rounded text-xs"
+                            onClick={() => declineInvite(invite.id)}
+                          >Відхилити</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Button variant="outline" className="text-sm" onClick={handleLogout}>
                 Log Out
               </Button>

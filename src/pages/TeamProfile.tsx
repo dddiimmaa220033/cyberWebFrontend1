@@ -3,10 +3,15 @@ import { useParams } from "react-router-dom";
 
 const TeamProfile = () => {
   const { teamId } = useParams();
-  const [team, setTeam] = useState(null);
+  const [team, setTeam] = useState<any>(null);
+  const [inviteInput, setInviteInput] = useState("");
+  const [userSuggestions, setUserSuggestions] = useState<any[]>([]);
+  const [inviteStatus, setInviteStatus] = useState<string | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token"); // або "accessToken", якщо саме він валідний
+  // ОКРЕМА ФУНКЦІЯ ДЛЯ ЗАВАНТАЖЕННЯ ПРОФІЛЮ
+  const fetchTeamProfile = () => {
+    const token = localStorage.getItem("token");
     fetch(`http://localhost:3000/teams/${teamId}/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -14,7 +19,49 @@ const TeamProfile = () => {
     })
       .then(res => res.json())
       .then(data => setTeam(data));
+  };
+
+  useEffect(() => {
+    fetchTeamProfile();
   }, [teamId]);
+
+  // Автодоповнення користувачів
+  useEffect(() => {
+    if (inviteInput.length < 1) {
+      setUserSuggestions([]);
+      return;
+    }
+    const token = localStorage.getItem("token");
+    fetch(`http://localhost:3000/users/search?query=${inviteInput}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setUserSuggestions(data));
+  }, [inviteInput]);
+
+  // Запросити користувача
+  const handleInvite = async (userId: number) => {
+    setInviteStatus(null);
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:3000/teams/${teamId}/invite`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ toUserId: userId })
+    });
+    if (res.ok) {
+      setInviteStatus("Запрошення надіслано!");
+      setInviteInput("");
+      setUserSuggestions([]);
+      // Оновити дані команди (щоб після прийняття інвайту новий учасник зʼявився)
+      fetchTeamProfile();
+    } else {
+      const data = await res.json();
+      setInviteStatus(data.error || "Помилка запрошення");
+    }
+  };
 
   const [tab, setTab] = useState<"overview" | "members" | "statistics">("members");
 
@@ -35,11 +82,56 @@ const TeamProfile = () => {
             <div className="text-4xl font-extrabold text-white mb-1 tracking-wide">{team.teamName}</div>
             <div className="text-[#bfc9e0] text-sm">{team.members.length} member</div>
           </div>
-          <button className="ml-auto bg-[#13b7e6] hover:bg-[#0fa1c7] text-white px-6 py-2 rounded font-bold transition">
+          <button
+            className="ml-auto bg-[#13b7e6] hover:bg-[#0fa1c7] text-white px-6 py-2 rounded font-bold transition"
+            onClick={() => setShowInviteModal(true)}
+          >
             Invite
           </button>
         </div>
       </div>
+
+      {/* ДОДАЙ МОДАЛЬНЕ ВІКНО ОДРАЗУ ПІСЛЯ HEADER */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-[#23263a] rounded-lg p-6 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-white text-xl"
+              onClick={() => setShowInviteModal(false)}
+            >×</button>
+            <div className="text-white font-semibold mb-1">Запросити у команду</div>
+            <input
+              className="w-full p-2 rounded bg-[#181a23] text-white mb-1 border border-gray-700"
+              placeholder="Введіть ім'я користувача"
+              value={inviteInput}
+              onChange={e => setInviteInput(e.target.value)}
+            />
+            {userSuggestions.length > 0 && (
+              <div className="bg-[#23263a] rounded shadow-lg mt-1 max-h-40 overflow-y-auto">
+                {userSuggestions.map(user => (
+                  <div
+                    key={user.id}
+                    className="px-4 py-2 cursor-pointer hover:bg-[#13b7e6] hover:text-white transition"
+                    onClick={() => handleInvite(user.id)}
+                  >
+                    {user.username}
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              className="mt-3 bg-blue-600 text-white px-4 py-2 rounded"
+              onClick={() => {
+                if (userSuggestions.length > 0) handleInvite(userSuggestions[0].id);
+              }}
+              disabled={userSuggestions.length === 0}
+            >
+              Запросити
+            </button>
+            {inviteStatus && <div className="text-green-400 mt-2">{inviteStatus}</div>}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="container mx-auto">
@@ -99,6 +191,8 @@ const TeamProfile = () => {
                 <div className="text-[#bfc9e0] text-sm">{team.members[0].registered}</div>
               </div>
             </div>
+            {/* Invite input */}
+            
           </div>
         )}
 
