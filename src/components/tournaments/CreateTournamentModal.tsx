@@ -12,7 +12,7 @@ const templates = [
 	{
 		id: "2",
 		name: "2v2 - Wingman",
-		desc: "Європа • 2v2 • 32 места • Вибування после одного пораження...",
+		desc: "Європа • 2v2 • 32 места • Вибування после одного поражения...",
 		img: "https://i.imgur.com/8QpQK5F.png",
 	},
 	{
@@ -24,6 +24,27 @@ const templates = [
 ];
 
 const steps = ["Шаблон", "General", "Teams", "Date"];
+
+const templateData: Record<string, { format: string; description: string; rules: string; playersPerTeam: string }> = {
+  "1": {
+    format: "5v5 - Bomb Defusal",
+    description: "Класичний режим 5 на 5. Команди змагаються у встановленні або знешкодженні бомби. Турнір для досвідчених гравців.",
+    rules: "Гра проходить за стандартними правилами CS. Заборонено використання стороннього ПЗ, чіти, образи в чаті. Кожна команда має 5 гравців.",
+    playersPerTeam: "5v5"
+  },
+  "2": {
+    format: "2v2 - Wingman",
+    description: "Динамічний режим 2 на 2. Ідеально для швидких матчів та командної взаємодії.",
+    rules: "Гра проходить на Wingman-картах. Заборонено чіти, стороннє ПЗ, образи. Кожна команда має 2 гравців.",
+    playersPerTeam: "2v2"
+  },
+  "3": {
+    format: "1v1 - Aim Maps",
+    description: "Індивідуальні дуелі на aim-картах. Перевір свої навички стрільби проти інших гравців.",
+    rules: "Гра проходить на aim-картах. Заборонено чіти, стороннє ПЗ, образи. Один гравець проти одного.",
+    playersPerTeam: "1v1"
+  }
+};
 
 const CreateTournamentModal = ({
 	onClose,
@@ -38,19 +59,69 @@ const CreateTournamentModal = ({
 	const [playersPerTeam, setPlayersPerTeam] = useState("5v5");
 	const [date, setDate] = useState("2025-07-03T20:00");
 	const [gmt, setGmt] = useState("GMT+3");
+	const [format, setFormat] = useState("Single Elimination");
+	const [rules, setRules] = useState("");
+	const [description, setDescription] = useState("");
+	const [maxTeams, setMaxTeams] = useState(8);
+	const [endDate, setEndDate] = useState(""); // можна залишити, але не використовувати
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	// Мок користувача
 	const username = "cdiimmaa220033";
 
 	// Мок створення турніру
-	const handleCreate = () => {
-		setTimeout(() => {
-			onCreated("new-tournament-id");
-		}, 500);
+	const handleCreate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:3000/tournaments", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              name: tournamentName,
+              format,
+              rules,
+              description,
+              start_date: date,
+              max_teams: maxTeams,
+              status: "запланований",
+              players_per_team: Number(playersPerTeam.split("v")[0])
+            }),
+        });
+        if (!res.ok) throw new Error("Турнір з таким ім'ям вже існує або сталася помилка сервера");
+        const data = await res.json();
+        onCreated(data.tournament.id);
+    } catch (e: any) {
+        setError(e.message || "Помилка");
+    }
+    setLoading(false);
 	};
 
 	// Вибір шаблону
 	const selectedTemplateObj = templates.find((t) => t.id === selectedTemplate);
+
+	// При переході на Step 1, якщо вибрано шаблон — підставляємо дані
+	React.useEffect(() => {
+		if (step === 1 && selectedTemplate && selectedTemplate !== "custom") {
+			const t = templateData[selectedTemplate];
+			setFormat(t.format);
+			setDescription(t.description);
+			setRules(t.rules);
+			setPlayersPerTeam(t.playersPerTeam);
+		}
+		if (step === 1 && selectedTemplate === "custom") {
+			setFormat("Single Elimination");
+			setDescription("");
+			setRules("");
+			setPlayersPerTeam("5v5");
+		}
+		// eslint-disable-next-line
+	}, [step, selectedTemplate]);
 
 	return (
 		<div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
@@ -167,51 +238,44 @@ const CreateTournamentModal = ({
 					{/* Step 1: General */}
 					{step === 1 && (
 						<>
-							<div className="mb-2 font-bold text-white">Selected template</div>
-							{selectedTemplateObj && (
-								<div className="flex items-center gap-3 p-2 rounded-lg mb-4 bg-[#181a23]">
-									<img
-										src={selectedTemplateObj.img}
-										alt={selectedTemplateObj.name}
-										className="w-16 h-10 rounded object-cover"
-									/>
-									<div>
-										<div className="font-semibold text-white">
-											{selectedTemplateObj.name}
-										</div>
-										<div className="text-xs text-gray-400">
-											{selectedTemplateObj.desc}
-										</div>
-									</div>
-								</div>
-							)}
-							<div className="mb-2 font-bold text-white">Name</div>
+							<div className="mb-2 font-bold text-white">Назва турніру</div>
 							<input
 								className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700 focus:outline-none focus:border-cyan-400"
 								value={tournamentName}
 								onChange={(e) => setTournamentName(e.target.value)}
 								placeholder="Tournament name"
 							/>
-							<div className="mb-2 font-bold text-white">Hosted by</div>
-							<div className="flex items-center gap-3 p-2 rounded-lg bg-[#181a23] mb-2">
-								<User className="w-6 h-6 text-gray-400" />
-								<span className="text-white">{username}</span>
-								<Button className="ml-auto" size="sm">
-									Create Space
-								</Button>
-							</div>
-							<div className="text-xs text-gray-400 bg-[#23263a] rounded-lg p-2 mb-2">
-								You are currently creating this tournament to be user-hosted. To
-								get the most out of your tournament, make sure to host it in a
-								Space.
-							</div>
+							<div className="mb-2 font-bold text-white">Формат</div>
+							<input
+								className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700"
+								value={format}
+								disabled={selectedTemplate !== "custom"}
+								onChange={(e) => setFormat(e.target.value)}
+								placeholder="Формат"
+							/>
+							<div className="mb-2 font-bold text-white">Опис</div>
+							<textarea
+								className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700"
+								value={description}
+								disabled={selectedTemplate !== "custom"}
+								onChange={(e) => setDescription(e.target.value)}
+								placeholder="Короткий опис турніру"
+							/>
+							<div className="mb-2 font-bold text-white">Правила</div>
+							<textarea
+								className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700"
+								value={rules}
+								disabled={selectedTemplate !== "custom"}
+								onChange={(e) => setRules(e.target.value)}
+								placeholder="Вкажіть основні правила"
+							/>
 							<div className="flex justify-between mt-4">
 								<Button variant="outline" onClick={() => setStep(step - 1)}>
 									Back
 								</Button>
 								<Button
 									onClick={() => setStep(step + 1)}
-									disabled={!tournamentName}
+									disabled={!tournamentName || !format || !description}
 									className="bg-cyan-500 text-white"
 								>
 									Next
@@ -223,28 +287,17 @@ const CreateTournamentModal = ({
 					{/* Step 2: Teams */}
 					{step === 2 && (
 						<>
-							<div className="mb-2 font-bold text-white">Selected template</div>
-							{selectedTemplateObj && (
-								<div className="flex items-center gap-3 p-2 rounded-lg mb-4 bg-[#181a23]">
-									<img
-										src={selectedTemplateObj.img}
-										alt={selectedTemplateObj.name}
-										className="w-16 h-10 rounded object-cover"
-									/>
-									<div>
-										<div className="font-semibold text-white">
-											{selectedTemplateObj.name}
-										</div>
-										<div className="text-xs text-gray-400">
-											{selectedTemplateObj.desc}
-										</div>
-									</div>
-								</div>
-							)}
-							<div className="mb-2 font-bold text-white">Players per team</div>
-							<div className="text-sm text-gray-400 mb-2">
-								Choose how many players can be in each team.
-							</div>
+							<div className="mb-2 font-bold text-white">Кількість команд</div>
+							<input
+								type="number"
+								min={2}
+								max={64}
+								className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700"
+								value={maxTeams}
+								onChange={(e) => setMaxTeams(Number(e.target.value))}
+								placeholder="max teams"
+							/>
+							<div className="mb-2 font-bold text-white">Гравців у команді</div>
 							<div className="flex flex-col gap-2 mb-4">
 								{["1v1", "2v2", "3v3", "4v4", "5v5"].map((opt) => (
 									<label
@@ -283,46 +336,14 @@ const CreateTournamentModal = ({
 					{/* Step 3: Date */}
 					{step === 3 && (
 						<>
-							<div className="mb-2 font-bold text-white">Selected template</div>
-							{selectedTemplateObj && (
-								<div className="flex items-center gap-3 p-2 rounded-lg mb-4 bg-[#181a23]">
-									<img
-										src={selectedTemplateObj.img}
-										alt={selectedTemplateObj.name}
-										className="w-16 h-10 rounded object-cover"
-									/>
-									<div>
-										<div className="font-semibold text-white">
-											{selectedTemplateObj.name}
-										</div>
-										<div className="text-xs text-gray-400">
-											{selectedTemplateObj.desc}
-										</div>
-									</div>
-								</div>
-							)}
-							<div className="mb-2 font-bold text-white">Date and time</div>
-							<div className="text-sm text-gray-400 mb-2">
-								Pick a date and time for your tournament.
-							</div>
-							<div className="flex gap-2 mb-4">
-								<select
-									className="bg-[#181a23] text-white rounded p-2 border border-gray-700"
-									value={gmt}
-									onChange={(e) => setGmt(e.target.value)}
-								>
-									<option>GMT+3</option>
-									<option>GMT+2</option>
-									<option>GMT+1</option>
-									<option>GMT+0</option>
-								</select>
-								<input
-									type="datetime-local"
-									className="bg-[#181a23] text-white rounded p-2 border border-gray-700"
-									value={date}
-									onChange={(e) => setDate(e.target.value)}
-								/>
-							</div>
+							<div className="mb-2 font-bold text-white">Дата початку</div>
+							<input
+								type="datetime-local"
+								className="bg-[#181a23] text-white rounded p-2 border border-gray-700 mb-4"
+								value={date}
+								onChange={(e) => setDate(e.target.value)}
+							/>
+							{error && <div className="text-red-500 mb-2">{error}</div>}
 							<div className="flex justify-between mt-4">
 								<Button variant="outline" onClick={() => setStep(step - 1)}>
 									Back
@@ -330,8 +351,9 @@ const CreateTournamentModal = ({
 								<Button
 									onClick={handleCreate}
 									className="bg-cyan-500 text-white"
+									disabled={loading}
 								>
-									Create
+									{loading ? "Створення..." : "Створити"}
 								</Button>
 							</div>
 						</>
