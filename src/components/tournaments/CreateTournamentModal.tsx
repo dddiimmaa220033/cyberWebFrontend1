@@ -246,18 +246,19 @@ const CreateTournamentModal = ({
 								placeholder="Tournament name"
 							/>
 							<div className="mb-2 font-bold text-white">Формат</div>
-							<input
+							<select
 								className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700"
 								value={format}
-								disabled={selectedTemplate !== "custom"}
 								onChange={(e) => setFormat(e.target.value)}
-								placeholder="Формат"
-							/>
+							>
+								<option value="5v5 - Bomb Defusal">5v5 - Bomb Defusal</option>
+								<option value="2v2 - Wingman">2v2 - Wingman</option>
+								<option value="1v1 - Aim Maps">1v1 - Aim Maps</option>
+							</select>
 							<div className="mb-2 font-bold text-white">Опис</div>
 							<textarea
 								className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700"
 								value={description}
-								disabled={selectedTemplate !== "custom"}
 								onChange={(e) => setDescription(e.target.value)}
 								placeholder="Короткий опис турніру"
 							/>
@@ -265,7 +266,6 @@ const CreateTournamentModal = ({
 							<textarea
 								className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700"
 								value={rules}
-								disabled={selectedTemplate !== "custom"}
 								onChange={(e) => setRules(e.target.value)}
 								placeholder="Вкажіть основні правила"
 							/>
