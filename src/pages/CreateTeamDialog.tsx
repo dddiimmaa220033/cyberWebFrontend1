@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 
-const disciplines = ["Футбол", "Баскетбол", "Волейбол", "Кіберспорт"];
-
 const CreateTeamDialog = ({
   onClose,
   onCreated,
@@ -10,7 +8,6 @@ const CreateTeamDialog = ({
   onCreated: (team: any) => void;
 }) => {
   const [name, setName] = useState("");
-  const [discipline, setDiscipline] = useState("Кіберспорт");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,7 +24,7 @@ const CreateTeamDialog = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name, discipline }),
+        body: JSON.stringify({ name, discipline: "CS1.6" }), // або потрібне значення
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Помилка створення команди");
@@ -51,16 +48,6 @@ const CreateTeamDialog = ({
         maxLength={50}
         required
       />
-      <label className="block mb-2 text-white">Дисципліна</label>
-      <select
-        className="w-full p-2 rounded bg-[#181a23] text-white mb-4 border border-gray-700"
-        value={discipline}
-        onChange={e => setDiscipline(e.target.value)}
-      >
-        {disciplines.map(d => (
-          <option key={d} value={d}>{d}</option>
-        ))}
-      </select>
       {error && <div className="text-red-400 mb-2">{error}</div>}
       <div className="flex gap-2">
         <button type="button" onClick={onClose} className="bg-gray-600 text-white px-4 py-2 rounded">Скасувати</button>

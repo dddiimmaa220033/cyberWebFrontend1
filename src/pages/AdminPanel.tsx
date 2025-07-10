@@ -210,7 +210,17 @@ const AdminPanel = () => {
                         <TableCell>{tournament.name}</TableCell>
                         <TableCell>{tournament.discipline}</TableCell>
                         <TableCell>{tournament.created_by}</TableCell>
-                        <TableCell>{new Date(tournament.created_at).toLocaleString()}</TableCell>
+                        <TableCell>
+                          {new Date(tournament.created_at).toLocaleString("uk-UA", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                            timeZone: "Europe/Kyiv"
+                          })}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button variant="outline" size="sm">Edit</Button>
                         </TableCell>
@@ -244,7 +254,15 @@ const AdminPanel = () => {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.username}</TableCell>
                         <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell>{new Date(user.created_at).toLocaleString()}</TableCell>
+                        <TableCell>{new Date(user.created_at).toLocaleString("uk-UA", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "Europe/Kyiv"
+})}</TableCell>
                         <TableCell>
                           {user.tournaments && user.tournaments.length > 0 ? (
                             <ul className="space-y-1">

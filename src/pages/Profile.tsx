@@ -4,7 +4,10 @@ import { Link } from "react-router-dom";
 const Profile = () => {
   const [tab, setTab] = useState<"teams" | "tournaments" | "friends">("teams");
   const [teams, setTeams] = useState<any[]>([]);
-  const username = localStorage.getItem("username") || "User";
+  const [createdTournaments, setCreatedTournaments] = useState<any[]>([]);
+  const [joinedTournaments, setJoinedTournaments] = useState<any[]>([]);
+  const username = localStorage.getItem("username");
+  const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -16,6 +19,22 @@ const Profile = () => {
       .then((res) => res.json())
       .then((data) => setTeams(data));
   }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/tournaments")
+      .then((res) => res.json())
+      .then((data) => {
+        setCreatedTournaments(
+          data.filter((t) => String(t.created_by) === String(userId))
+        );
+        setJoinedTournaments(
+          data.filter((t) =>
+            Array.isArray(t.teams) &&
+            t.teams.some((team) => team.members?.includes(userId))
+          )
+        );
+      });
+  }, [userId]);
 
   return (
     <div className="min-h-screen bg-[#181c2f] py-20 pt-40">
@@ -105,47 +124,43 @@ const Profile = () => {
           {tab === "tournaments" && (
             // Tournaments tab content (скріншот 2)
             <div className="w-full">
-              <h3 className="text-white text-lg font-bold mb-2">Hosting</h3>
-              <div className="text-muted-foreground mb-4">
-                These tournaments are hosted by you.
+              <h3 className="text-white text-lg font-bold mb-2">
+                Створені турніри
+              </h3>
+              <div className="flex gap-6 flex-wrap mb-8">
+                {createdTournaments.length === 0 && (
+                  <div className="text-white">Ви ще не створили турнірів.</div>
+                )}
+                {createdTournaments.map((t) => (
+                  <div
+                    key={t.id}
+                    className="bg-[#23263a] rounded-lg overflow-hidden w-72 p-4"
+                  >
+                    <div className="text-white font-bold">{t.name}</div>
+                    <div className="text-muted-foreground text-sm">
+                      {t.format}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex gap-6">
-                <div className="bg-[#23263a] rounded-lg overflow-hidden w-72">
-                  <img
-                    src="https://cdn.cloudflare.steamstatic.com/steam/apps/228380/header.jpg"
-                    alt="Tournament"
-                  />
-                  <div className="p-4">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      15 days ago
-                    </div>
-                    <div className="text-white font-bold">мічук</div>
+              <h3 className="text-white text-lg font-bold mb-2">
+                Турніри, в яких ви берете участь
+              </h3>
+              <div className="flex gap-6 flex-wrap">
+                {joinedTournaments.length === 0 && (
+                  <div className="text-white">Ви ще не берете участь у турнірах.</div>
+                )}
+                {joinedTournaments.map((t) => (
+                  <div
+                    key={t.id}
+                    className="bg-[#23263a] rounded-lg overflow-hidden w-72 p-4"
+                  >
+                    <div className="text-white font-bold">{t.name}</div>
                     <div className="text-muted-foreground text-sm">
-                      Europe • 1v1 • 8 spots
-                    </div>
-                    <div className="mt-2 text-xs bg-[#23263a] rounded px-2 py-1 inline-block">
-                      1 player
+                      {t.format}
                     </div>
                   </div>
-                </div>
-                <div className="bg-[#23263a] rounded-lg overflow-hidden w-72">
-                  <img
-                    src="https://cdn.cloudflare.steamstatic.com/steam/apps/228380/header.jpg"
-                    alt="Tournament"
-                  />
-                  <div className="p-4">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      3 days ago
-                    </div>
-                    <div className="text-white font-bold">311312</div>
-                    <div className="text-muted-foreground text-sm">
-                      Europe • 1v1 • 8 spots
-                    </div>
-                    <div className="mt-2 text-xs bg-[#23263a] rounded px-2 py-1 inline-block">
-                      1 player
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           )}

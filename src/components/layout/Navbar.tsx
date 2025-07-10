@@ -218,7 +218,10 @@ const Navbar = () => {
               <Button variant="outline" className="text-sm" onClick={() => navigate("/login")}>
                 Sign In
               </Button>
-              <Button className="text-sm bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity">
+              <Button
+                className="text-sm bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity"
+                onClick={() => navigate("/login?register=1")}
+              >
                 Sign Up
               </Button>
             </>
@@ -258,7 +261,13 @@ const Navbar = () => {
                 <Button variant="outline" className="text-lg" onClick={() => { setMobileMenu(false); navigate("/login"); }}>
                   Sign In
                 </Button>
-                <Button className="text-lg bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity">
+                <Button
+                  className="text-lg bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity"
+                  onClick={() => {
+                    setMobileMenu(false);
+                    navigate("/login?register=1");
+                  }}
+                >
                   Sign Up
                 </Button>
               </>

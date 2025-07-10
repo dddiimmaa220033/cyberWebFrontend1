@@ -28,9 +28,25 @@ interface Tournament {
   start_date: string;
   registration_start?: string;
   registration_end?: string;
+  ready_start?: string;
+  ready_end?: string;
   teams?: Team[];
-  max_teams?: number; // ДОДАЙ ЦЕЙ РЯДОК
+  max_teams?: number;
+  created_at: string; // ДОДАЙ ЦЕЙ РЯДОК
+  created_by: string; // username або id організатора
 }
+
+function getUserIdFromToken() {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.userId || payload.user_id || null;
+  } catch {
+    return null;
+  }
+}
+const userId = String(getUserIdFromToken());
 
 const TournamentAdminPanel = () => {
   const { id } = useParams();
@@ -40,6 +56,9 @@ const TournamentAdminPanel = () => {
 
   // Таймер до старту
   const [timeLeft, setTimeLeft] = useState<string>("");
+
+  const username = localStorage.getItem("username");
+  // const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
     // Замініть на свій API-запит
@@ -52,11 +71,15 @@ const TournamentAdminPanel = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!tournament) return;
+    if (!tournament || !tournament.start_date) return;
     const interval = setInterval(() => {
+      // Час початку турніру
       const start = new Date(tournament.start_date).getTime();
-      const now = Date.now();
-      const diff = Math.max(0, start - now);
+      // Поточний час
+      const now = new Date().getTime();
+      // Рахуємо від поточного часу до старту
+      let diff = Math.max(0, start - now);
+
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff / (1000 * 60)) % 60);
       const seconds = Math.floor((diff / 1000) % 60);
@@ -136,7 +159,9 @@ const TournamentAdminPanel = () => {
             <TabsTrigger value="bracket">Сітка</TabsTrigger>
             <TabsTrigger value="matches">Матчі</TabsTrigger>
             <TabsTrigger value="teams">Команди</TabsTrigger>
-            <TabsTrigger value="settings">Налаштування</TabsTrigger>
+            {String(tournament?.created_by) === userId && (
+              <TabsTrigger value="settings">Налаштування</TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="overview">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -203,54 +228,127 @@ const TournamentAdminPanel = () => {
                 <div className="p-4 bg-[#23263a] rounded-lg">
                   <div className="font-bold text-white mb-2">Графік</div>
                   <div className="space-y-4">
-                    {/* Timeline Item */}
+                    {/* Вікно готовності відкривається */}
                     <div className="flex items-start gap-3">
                       <div className="flex flex-col items-center">
                         <div className="bg-[#181a23] text-white text-xs font-bold px-2 py-1 rounded">
-                          JUL<br />07
+                          {tournament.ready_start
+                            ? new Date(tournament.ready_start).toLocaleString("uk-UA", { month: "2-digit" })
+                            : "--"}
+                          <br />
+                          {tournament.ready_start
+                            ? new Date(tournament.ready_start).toLocaleString("uk-UA", { day: "2-digit" })
+                            : "--"}
                         </div>
                         <div className="h-full w-px bg-gray-700 flex-1" />
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Mon 17:15</div>
+                        <div className="text-xs text-gray-400">
+                          {tournament.ready_start
+                            ? new Date(tournament.ready_start).toLocaleString("uk-UA", {
+                                weekday: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                                timeZone: "Europe/Kyiv"
+                              })
+                            : "--"}
+                        </div>
                         <div className="font-semibold text-white">Вікно готовності відкривається</div>
-                        <div className="text-xs text-gray-400">Підтвердіть готовність і підтвердьте, що можете грати.</div>
+                        <div className="text-xs text-gray-400">
+                          Підтвердіть готовність і підтвердьте, що можете грати.
+                        </div>
                       </div>
                     </div>
+                    {/* Реєстрація закрита */}
                     <div className="flex items-start gap-3">
                       <div className="flex flex-col items-center">
                         <div className="bg-[#181a23] text-white text-xs font-bold px-2 py-1 rounded">
-                          JUL<br />07
+                          {tournament.registration_end
+                            ? new Date(tournament.registration_end).toLocaleString("uk-UA", { month: "2-digit" })
+                            : "--"}
+                          <br />
+                          {tournament.registration_end
+                            ? new Date(tournament.registration_end).toLocaleString("uk-UA", { day: "2-digit" })
+                            : "--"}
                         </div>
                         <div className="h-full w-px bg-gray-700 flex-1" />
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Mon 18:00</div>
+                        <div className="text-xs text-gray-400">
+                          {tournament.registration_end
+                            ? new Date(tournament.registration_end).toLocaleString("uk-UA", {
+                                weekday: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                                timeZone: "Europe/Kyiv"
+                              })
+                            : "--"}
+                        </div>
                         <div className="font-semibold text-white">Реєстрація закрита</div>
-                        <div className="text-xs text-gray-400">Більше не можна зареєструватися.</div>
+                        <div className="text-xs text-gray-400">
+                          Більше не можна зареєструватися.
+                        </div>
                       </div>
                     </div>
+                    {/* Вікно готовності закривається */}
                     <div className="flex items-start gap-3">
                       <div className="flex flex-col items-center">
                         <div className="bg-[#181a23] text-white text-xs font-bold px-2 py-1 rounded">
-                          JUL<br />07
+                          {tournament.ready_end
+                            ? new Date(tournament.ready_end).toLocaleString("uk-UA", { month: "2-digit" })
+                            : "--"}
+                          <br />
+                          {tournament.ready_end
+                            ? new Date(tournament.ready_end).toLocaleString("uk-UA", { day: "2-digit" })
+                            : "--"}
                         </div>
                         <div className="h-full w-px bg-gray-700 flex-1" />
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Mon 18:00</div>
+                        <div className="text-xs text-gray-400">
+                          {tournament.ready_end
+                            ? new Date(tournament.ready_end).toLocaleString("uk-UA", {
+                                weekday: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                                timeZone: "Europe/Kyiv"
+                              })
+                            : "--"}
+                        </div>
                         <div className="font-semibold text-white">Вікно готовності закривається</div>
-                        <div className="text-xs text-gray-400">Більше не можна підтвердити готовність.</div>
+                        <div className="text-xs text-gray-400">
+                          Більше не можна підтвердити готовність.
+                        </div>
                       </div>
                     </div>
+                    {/* Старт */}
                     <div className="flex items-start gap-3">
                       <div className="flex flex-col items-center">
                         <div className="bg-[#181a23] text-white text-xs font-bold px-2 py-1 rounded">
-                          JUL<br />07
+                          {tournament.start_date
+                            ? new Date(tournament.start_date).toLocaleString("uk-UA", { month: "2-digit" })
+                            : "--"}
+                          <br />
+                          {tournament.start_date
+                            ? new Date(tournament.start_date).toLocaleString("uk-UA", { day: "2-digit" })
+                            : "--"}
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Mon 18:00</div>
+                        <div className="text-xs text-gray-400">
+                          {tournament.start_date
+                            ? new Date(tournament.start_date).toLocaleString("uk-UA", {
+                                weekday: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                                timeZone: "Europe/Kyiv"
+                              })
+                            : "--"}
+                        </div>
                         <div className="font-semibold text-white">Старт</div>
                         <div className="text-xs text-gray-400">Початок змагання</div>
                       </div>

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { SteamLoginButton } from "@/components/ui/SteamLoginButton";
 
 export default function AuthForm() {
@@ -11,6 +11,16 @@ export default function AuthForm() {
   const [error, setError] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("register") === "1") {
+      setIsLogin(false);
+    } else {
+      setIsLogin(true); // ДОДАЙ ЦЕ
+    }
+  }, [location.search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
