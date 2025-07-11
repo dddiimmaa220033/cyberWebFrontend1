@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+
+function getUserIdFromToken() {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.userId || payload.user_id || null;
+  } catch {
+    return null;
+  }
+}
 
 const TeamProfile = () => {
   const { teamId } = useParams();
@@ -65,6 +76,9 @@ const TeamProfile = () => {
 
   const [tab, setTab] = useState<"overview" | "members" | "statistics">("members");
 
+  const myId = getUserIdFromToken();
+  const isCaptain = team?.members.some((m: any) => m.id === myId && m.role === "Капітан");
+
   if (!team) {
     return <div className="text-white text-center py-10">Loading...</div>;
   }
@@ -82,12 +96,14 @@ const TeamProfile = () => {
             <div className="text-4xl font-extrabold text-white mb-1 tracking-wide">{team.teamName}</div>
             <div className="text-[#bfc9e0] text-sm">{team.members.length} member</div>
           </div>
-          <button
-            className="ml-auto bg-[#13b7e6] hover:bg-[#0fa1c7] text-white px-6 py-2 rounded font-bold transition"
-            onClick={() => setShowInviteModal(true)}
-          >
-            Invite
-          </button>
+          {isCaptain && (
+            <button
+              className="ml-auto bg-[#13b7e6] hover:bg-[#0fa1c7] text-white px-6 py-2 rounded font-bold transition"
+              onClick={() => setShowInviteModal(true)}
+            >
+              Invite
+            </button>
+          )}
         </div>
       </div>
 
@@ -173,26 +189,80 @@ const TeamProfile = () => {
       <div className="container mx-auto">
         {tab === "members" && (
           <div>
-            {/* Invite block */}
-            <div className="bg-[#292c3c] rounded-lg p-5 mb-6">
-              <div className="text-white font-semibold mb-1">Invite</div>
-              <div className="text-[#bfc9e0] text-sm">Invite new members to the team.</div>
-            </div>
-            {/* Members list */}
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-[#23263a] flex items-center justify-center">
-                <span className="text-4xl text-[#6c7a96]">👤</span>
-              </div>
-              <div>
-                <div className="text-white font-semibold flex items-center gap-2">
-                  {team.members[0].name}
-                  <span className="ml-2 px-2 py-1 bg-[#23263a] rounded text-xs text-[#13b7e6]">Captain</span>
+            {/* Invite block тільки для капітана */}
+            {isCaptain && (
+              <>
+                <div className="bg-[#292c3c] rounded-lg p-5 mb-6">
+                  <div className="text-white font-semibold mb-1">Invite</div>
+                  <div className="text-[#bfc9e0] text-sm">Invite new members to the team.</div>
                 </div>
-                <div className="text-[#bfc9e0] text-sm">{team.members[0].registered}</div>
-              </div>
+                {/* Модалка інвайту */}
+                {showInviteModal && (
+                  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                    <div className="bg-[#23263a] rounded-lg p-6 w-full max-w-md relative">
+                      <button
+                        className="absolute top-2 right-2 text-white text-xl"
+                        onClick={() => setShowInviteModal(false)}
+                      >×</button>
+                      <div className="text-white font-semibold mb-1">Запросити у команду</div>
+                      <input
+                        className="w-full p-2 rounded bg-[#181a23] text-white mb-1 border border-gray-700"
+                        placeholder="Введіть ім'я користувача"
+                        value={inviteInput}
+                        onChange={e => setInviteInput(e.target.value)}
+                      />
+                      {userSuggestions.length > 0 && (
+                        <div className="bg-[#23263a] rounded shadow-lg mt-1 max-h-40 overflow-y-auto">
+                          {userSuggestions.map(user => (
+                            <div
+                              key={user.id}
+                              className="px-4 py-2 cursor-pointer hover:bg-[#13b7e6] hover:text-white transition"
+                              onClick={() => handleInvite(user.id)}
+                            >
+                              {user.username}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        className="mt-3 bg-blue-600 text-white px-4 py-2 rounded"
+                        onClick={() => {
+                          if (userSuggestions.length > 0) handleInvite(userSuggestions[0].id);
+                        }}
+                        disabled={userSuggestions.length === 0}
+                      >
+                        Запросити
+                      </button>
+                      {inviteStatus && <div className="text-green-400 mt-2">{inviteStatus}</div>}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Members list */}
+            <div className="flex flex-wrap gap-6">
+              {team.members.map((member) => (
+                <Link
+                  to={`/profile/${member.id}`}
+                  key={member.id}
+                  className="flex items-center gap-4 bg-[#23263a] rounded-lg p-4 min-w-[220px] hover:bg-[#2d3250] transition"
+                  style={{ textDecoration: "none" }}
+                >
+                  <div className="w-16 h-16 rounded-full bg-[#181a23] flex items-center justify-center">
+                    <span className="text-3xl text-[#6c7a96]">👤</span>
+                  </div>
+                  <div>
+                    <div className="text-white font-semibold flex items-center gap-2">
+                      {member.name}
+                      {member.role === "Капітан" && (
+                        <span className="ml-2 px-2 py-1 bg-[#23263a] rounded text-xs text-[#13b7e6]">Captain</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
-            {/* Invite input */}
-            
           </div>
         )}
 
