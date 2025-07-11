@@ -8,6 +8,7 @@ const CreateTeamDialog = ({
   onCreated: (team: any) => void;
 }) => {
   const [name, setName] = useState("");
+  const [isPrivate, setIsPrivate] = useState(true); // Додаємо стан
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,7 +17,6 @@ const CreateTeamDialog = ({
     setLoading(true);
     setError("");
     try {
-      // ЗМІНИ ТУТ:
       const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:3000/teams", {
         method: "POST",
@@ -24,7 +24,7 @@ const CreateTeamDialog = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name, discipline: "CS1.6" }), // або потрібне значення
+        body: JSON.stringify({ name, discipline: "CS1.6", is_private: isPrivate }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Помилка створення команди");
@@ -48,6 +48,27 @@ const CreateTeamDialog = ({
         maxLength={50}
         required
       />
+      <label className="block mb-2 text-white">Тип команди</label>
+      <div className="flex gap-4 mb-4">
+        <label className="flex items-center text-white">
+          <input
+            type="radio"
+            checked={isPrivate}
+            onChange={() => setIsPrivate(true)}
+            className="mr-2"
+          />
+          Приватна (тільки організатор може запрошувати)
+        </label>
+        <label className="flex items-center text-white">
+          <input
+            type="radio"
+            checked={!isPrivate}
+            onChange={() => setIsPrivate(false)}
+            className="mr-2"
+          />
+          Публічна (будь-хто може приєднатися)
+        </label>
+      </div>
       {error && <div className="text-red-400 mb-2">{error}</div>}
       <div className="flex gap-2">
         <button type="button" onClick={onClose} className="bg-gray-600 text-white px-4 py-2 rounded">Скасувати</button>
