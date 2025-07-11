@@ -14,6 +14,18 @@ import {
 import { Search, Users, Filter } from "lucide-react";
 import TeamCard from "@/components/teams/TeamCard";
 
+function getUserIdFromToken(token: string): number | null {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return Number(payload.userId || payload.id); // змінити на своє поле!
+    } catch {
+        return null;
+    }
+}
+
+const token = localStorage.getItem("accessToken");
+const userId = token ? getUserIdFromToken(token) : null;
+
 const Teams = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showCreateForm, setShowCreateForm] = useState(false);
@@ -32,6 +44,17 @@ const Teams = () => {
 
 	const filteredTeams = teamsData
 		.filter((team) => team.is_private === false)
+		.filter((team) => {
+			const captain = team.members.find(
+				(member: any) => member.role === "Капітан"
+			);
+			console.log(
+				`teamId: ${team.teamId}, created_by: ${team.created_by}, captainId: ${captain?.id}, userId: ${userId}`
+			);
+			// Виключаємо команди, де ти капітан
+			if (captain && captain.id === userId) return false;
+			return true;
+		})
 		.filter((team) => {
 			const matchesSearch = (team.teamName ?? team.name ?? "")
 				.toLowerCase()
