@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
 import CreateTeamDialog from "./CreateTeamDialog";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+
 import { Search, Users, Filter } from "lucide-react";
 import TeamCard from "@/components/teams/TeamCard";
 
@@ -23,7 +16,7 @@ function getUserIdFromToken(token: string): number | null {
     }
 }
 
-const token = localStorage.getItem("accessToken");
+const token = localStorage.getItem("token");
 const userId = token ? getUserIdFromToken(token) : null;
 
 const Teams = () => {
@@ -97,12 +90,18 @@ const Teams = () => {
 								competitors for your next tournament.
 							</p>
 						</div>
-						<Button
-							className="mt-4 md:mt-0 bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity"
-							onClick={() => setShowCreateForm(true)}
-						>
-							Create Team
-						</Button>
+						{token ? (
+							<Button
+								className="mt-4 md:mt-0 bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity"
+								onClick={() => setShowCreateForm(true)}
+							>
+								Create Team
+							</Button>
+						) : (
+							<p className="text-red-500 mt-2 text-sm">
+								Щоб створити команду, потрібно авторизуватись.
+							</p>
+						)}
 					</div>
 
 					{/* Filters */}

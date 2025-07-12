@@ -88,11 +88,25 @@ const TeamProfile = () => {
     }
   };
 
+  const handleLeaveTeam = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:3000/teams/${team.teamId}/leave`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+    if (res.ok) {
+      fetchTeamProfile(); // Оновити дані команди
+    }
+  };
+
   const [tab, setTab] = useState<"overview" | "members" | "statistics">("members");
 
   const myId = getUserIdFromToken();
-  const isCaptain = team?.members.some((m: any) => m.id === myId && m.role === "Капітан");
-  const isMember = team?.members.some((m: any) => m.id === myId);
+  const isCaptain = team && Array.isArray(team.members) && team.members.some((m: any) => m.id === myId && m.role === "Капітан");
+  const isMember = team && Array.isArray(team.members) && team.members.some((m: any) => m.id === myId);
 
   if (!team) {
     return <div className="text-white text-center py-10">Loading...</div>;
@@ -125,6 +139,14 @@ const TeamProfile = () => {
               onClick={handleJoinTeam}
             >
               Приєднатися до команди
+            </button>
+          )}
+          {isMember && !isCaptain && (
+            <button
+              className="ml-auto bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded font-bold transition"
+              onClick={handleLeaveTeam}
+            >
+              Вийти з команди
             </button>
           )}
         </div>

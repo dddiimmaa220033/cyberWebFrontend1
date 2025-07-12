@@ -20,6 +20,7 @@ const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetch("http://localhost:3000/tournaments")
@@ -55,12 +56,18 @@ const Tournaments = () => {
                 Переглянь всі заплановані турніри, знаходь цікаві події та приєднуйся до змагань!
               </p>
             </div>
-            <Button
-              className="mt-4 md:mt-0 bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity"
-              onClick={() => setShowCreateModal(true)}
-            >
-              Створити турнір
-            </Button>
+            {token ? (
+              <Button
+                className="mt-4 md:mt-0 bg-gradient-to-r from-esports-purple to-esports-blue hover:opacity-90 transition-opacity"
+                onClick={() => setShowCreateModal(true)}
+              >
+                Створити турнір
+              </Button>
+            ) : (
+              <p className="text-red-500 mt-2 text-sm">
+                Щоб створити турнір, потрібно авторизуватись.
+              </p>
+            )}
           </div>
 
           {/* Filters */}

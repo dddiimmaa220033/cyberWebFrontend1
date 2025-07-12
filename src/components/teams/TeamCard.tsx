@@ -29,12 +29,31 @@ interface TeamCardProps {
   team: Team;
 }
 
+function getUserIdFromToken() {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.userId || payload.user_id || null;
+  } catch {
+    return null;
+  }
+}
+
 const TeamCard = ({ team, reloadTeams }: TeamCardProps & { reloadTeams?: () => void }) => {
+  const [members, setMembers] = useState(team.members);
   const [joined, setJoined] = useState(false);
   const winRate = Math.round((team.wins / (team.wins + team.losses)) * 100) || 0;
 
+  const token = localStorage.getItem("token");
+  const myId = getUserIdFromToken();
+  const username = localStorage.getItem("username");
+
+  const isCaptain = Array.isArray(members) && members.some((m: any) => m.id === myId && m.role === "Капітан");
+  const isMember = Array.isArray(members) && members.some((m: any) => m.id === myId);
+
   const handleJoin = async () => {
-    const token = localStorage.getItem("token");
+    if (!token) return;
     const res = await fetch(`http://localhost:3000/teams/${team.id}/join`, {
       method: "POST",
       headers: {
@@ -43,8 +62,26 @@ const TeamCard = ({ team, reloadTeams }: TeamCardProps & { reloadTeams?: () => v
       }
     });
     if (res.ok) {
+      setMembers([
+        ...members,
+        { id: myId, name: username, role: "Гравець" }
+      ]);
       setJoined(true);
-      reloadTeams && reloadTeams();
+    }
+  };
+
+  const handleLeave = async () => {
+    if (!token) return;
+    const res = await fetch(`http://localhost:3000/teams/${team.id}/leave`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+    if (res.ok) {
+      setMembers(members.filter((m: any) => m.id !== myId));
+      setJoined(false);
     }
   };
 
@@ -82,7 +119,7 @@ const TeamCard = ({ team, reloadTeams }: TeamCardProps & { reloadTeams?: () => v
       <div className="p-6">
         <h4 className="text-sm font-medium mb-3">Team Members</h4>
         <div className="flex flex-wrap gap-2 mb-6">
-          {team.members.map((member) => (
+          {members.map((member) => (
             <div key={member.id} className="inline-flex items-center bg-muted/30 rounded-full pl-1 pr-3 py-1">
               <Avatar className="h-6 w-6 mr-2">
                 <AvatarImage src={member.avatarUrl} alt={member.name} />
@@ -96,13 +133,18 @@ const TeamCard = ({ team, reloadTeams }: TeamCardProps & { reloadTeams?: () => v
       </div>
       
       <div className="px-6 pb-6 mt-auto">
-        {!team.is_private && !joined && (
+        {!team.is_private && !isMember && !!token && (
           <Button variant="outline" className="w-full" onClick={handleJoin}>
             Приєднатися
           </Button>
         )}
-        <Button variant="outline" className="w-full mt-2">
-          View Team Profile
+        {isMember && !isCaptain && !!token && (
+          <Button variant="outline" className="w-full bg-red-600 text-white mt-2" onClick={handleLeave}>
+            Вийти з команди
+          </Button>
+        )}
+        <Button variant="outline" className="w-full mt-2" asChild>
+          <Link to={`/teams/${team.id}`}>View Team Profile</Link>
         </Button>
       </div>
     </BlurCard>
