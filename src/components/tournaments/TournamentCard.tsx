@@ -11,9 +11,10 @@ interface Tournament {
   format: string;
   status: string;
   start_date: string;
-  teams?: any[]; // масив команд
+  teams?: any[];
   max_teams?: number;
   bannerUrl?: string;
+  players_per_team?: number; // ДОДАЙ ЦЕЙ РЯДОК
 }
 
 interface TournamentCardProps {
@@ -47,6 +48,11 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
           Команд: <span className="font-semibold">
             {Array.isArray(tournament.teams) ? tournament.teams.length : 0}
             {tournament.max_teams ? ` / ${tournament.max_teams}` : ""}
+          </span>
+        </div>
+        <div className="text-gray-300 mb-2">
+          Гравців у команді: <span className="font-semibold">
+            {tournament.players_per_team ?? "--"}
           </span>
         </div>
         <div className="text-gray-300 mb-2">

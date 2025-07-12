@@ -19,6 +19,8 @@ const TeamProfile = () => {
   const [userSuggestions, setUserSuggestions] = useState<any[]>([]);
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [tab, setTab] = useState<"overview" | "members" | "statistics" | "settings">("members");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // ОКРЕМА ФУНКЦІЯ ДЛЯ ЗАВАНТАЖЕННЯ ПРОФІЛЮ
   const fetchTeamProfile = () => {
@@ -102,7 +104,20 @@ const TeamProfile = () => {
     }
   };
 
-  const [tab, setTab] = useState<"overview" | "members" | "statistics">("members");
+  const handleDeleteTeam = async () => {
+    const token = localStorage.getItem("token");
+    if (!team) return;
+    const res = await fetch(`http://localhost:3000/teams/${team.teamId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+    if (res.ok) {
+      window.location.href = "/teams";
+    }
+  };
 
   const myId = getUserIdFromToken();
   const isCaptain = team && Array.isArray(team.members) && team.members.some((m: any) => m.id === myId && m.role === "Капітан");
@@ -227,6 +242,18 @@ const TeamProfile = () => {
           >
             Statistics
           </button>
+          {isCaptain && (
+            <button
+              className={`pb-2 font-semibold text-base transition ${
+                tab === "settings"
+                  ? "border-b-2 border-red-400 text-white"
+                  : "text-[#bfc9e0] hover:text-white"
+              }`}
+              onClick={() => setTab("settings")}
+            >
+              Settings
+            </button>
+          )}
         </div>
       </div>
 
@@ -339,7 +366,49 @@ const TeamProfile = () => {
         {tab === "statistics" && (
           <div className="text-[#bfc9e0] text-lg py-10">No statistics yet.</div>
         )}
+
+        {tab === "settings" && isCaptain && (
+          <div className="py-10">
+            <h2 className="text-white text-xl font-bold mb-6">Налаштування команди</h2>
+            <button
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded font-bold transition"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Видалити команду
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Модалка підтвердження видалення */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-[#23263a] rounded-lg p-6 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-white text-xl"
+              onClick={() => setShowDeleteModal(false)}
+            >×</button>
+            <div className="text-white font-semibold mb-4">Ви дійсно хочете видалити команду?</div>
+            <div className="flex gap-4">
+              <button
+                className="bg-red-600 text-white px-4 py-2 rounded"
+                onClick={async () => {
+                  await handleDeleteTeam();
+                  setShowDeleteModal(false);
+                }}
+              >
+                Підтвердити
+              </button>
+              <button
+                className="bg-gray-600 text-white px-4 py-2 rounded"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Відхилити
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
